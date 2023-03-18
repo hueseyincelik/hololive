@@ -12,11 +12,25 @@ from . import microscope
 
 
 class GUI:
-    def __init__(self, ip, port, camera="CCD", exposure_time=0.2, dimension=512):
+    def __init__(
+        self,
+        ip,
+        port,
+        camera="CCD",
+        exposure_time=0.2,
+        sideband_quadrant="upper_left",
+        auto_correlation_buffer=50,
+        dimension=512,
+    ):
         self.dimension = dimension
 
         self.microscope = microscope.Microscope(ip, port)
         self.microscope.configure_camera(camera, exposure_time)
+
+        self.sideband_quadrant, self.auto_correlation_buffer = (
+            sideband_quadrant,
+            auto_correlation_buffer,
+        )
 
         pg.init()
 
@@ -35,4 +49,31 @@ class GUI:
         img_CCD = self.microscope.acquire()
 
         img_fft = sfft.fft2(img_CCD)
-        img_shift = sfft.fftshift(img_fft)
+        img_fft_shifted = sfft.fftshift(img_fft)
+
+        if self.sideband_quadrant == "upper_left":
+            img_shift_cropped = img_fft_shifted[
+                : img_fft_shifted.shape[0] // 2 - self.auto_correlation_buffer,
+                : img_fft_shifted.shape[1] // 2 - self.auto_correlation_buffer,
+            ]
+        elif self.sideband_quadrant == "upper_right":
+            img_shift_cropped = img_fft_shifted[
+                : img_fft_shifted.shape[0] // 2 - self.auto_correlation_buffer,
+                img_fft_shifted.shape[1] // 2 + self.auto_correlation_buffer :,
+            ]
+        elif self.sideband_quadrant == "lower_left":
+            img_shift_cropped = img_fft_shifted[
+                img_fft_shifted.shape[0] // 2 + self.auto_correlation_buffer :,
+                : img_fft_shifted.shape[1] // 2 - self.auto_correlation_buffer,
+            ]
+        elif self.sideband_quadrant == "lower_right":
+            img_shift_cropped = img_fft_shifted[
+                img_fft_shifted.shape[0] // 2 + self.auto_correlation_buffer :,
+                img_fft_shifted.shape[1] // 2 + self.auto_correlation_buffer :,
+            ]
+        else:
+            raise ValueError("Unsupported position!")
+
+        sideband_position = np.argwhere(img_fft_shifted == np.amax(img_shift_cropped))[
+            0
+        ]
