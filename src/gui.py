@@ -24,7 +24,10 @@ class GUI:
 
         pg.init()
 
-        self.screen = pg.display.set_mode((self.dimension, self.dimension))
+        self.screen, self.font = (
+            pg.display.set_mode((self.dimension, self.dimension)),
+            pg.freetype.SysFont(None, 18),
+        )
         pg.display.set_caption("Live Phase")
 
         self.run()
@@ -59,6 +62,16 @@ class GUI:
 
             surface_phase_image = pg.surfarray.make_surface(current_phase_grayscale)
             self.screen.blit(surface_phase_image, (0, 0))
+
+            for coordinate, message in zip(
+                [(5, 5), (5, 25), (5, 45)],
+                [
+                    f"Quadrant: {self.sideband_quadrant}",
+                    f"Locking: {self.sideband_lock}",
+                    f"Buffer: {self.auto_correlation_buffer}",
+                ],
+            ):
+                self.font.render_to(self.screen, coordinate, message, pg.Color("RED"))
 
             pg.display.flip()
 
