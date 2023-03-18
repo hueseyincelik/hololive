@@ -1,0 +1,25 @@
+import scipy.fft as sfft
+import numpy as np
+
+import os, sys
+os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
+
+from . import microscope
+import pygame as pg
+
+class GUI:
+	def __init__(self, dimension=512):
+		self.dimension = dimension
+
+		pg.init()
+
+		self.screen = pg.display.set_mode((self.dimension, self.dimension))
+		pg.display.set_caption('Live Phase')
+
+		self.run()
+
+	def run(self):
+		while True:
+			for event in pg.event.get():
+				if event.type == pg.QUIT:
+					sys.exit()
