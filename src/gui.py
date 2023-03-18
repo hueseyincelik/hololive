@@ -12,8 +12,11 @@ from . import microscope
 
 
 class GUI:
-    def __init__(self, dimension=512):
+    def __init__(self, ip, port, camera="CCD", exposure_time=0.2, dimension=512):
         self.dimension = dimension
+
+        self.microscope = microscope.Microscope(ip, port)
+        self.microscope.configure_camera(camera, exposure_time)
 
         pg.init()
 
@@ -27,3 +30,9 @@ class GUI:
             for event in pg.event.get():
                 if event.type == pg.QUIT:
                     sys.exit()
+
+    def get_phase(self):
+        img_CCD = self.microscope.acquire()
+
+        img_fft = sfft.fft2(img_CCD)
+        img_shift = sfft.fftshift(img_fft)
