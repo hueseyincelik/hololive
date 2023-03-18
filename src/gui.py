@@ -50,6 +50,11 @@ class GUI:
                 255 * current_phase / current_phase.max()
             )
 
+            surface_phase_image = pg.surfarray.make_surface(current_phase_grayscale)
+            self.screen.blit(surface_phase_image, (0, 0))
+
+            pg.display.flip()
+
     def get_phase(self):
         img_CCD = self.microscope.acquire()
 
