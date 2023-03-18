@@ -45,6 +45,11 @@ class GUI:
                 if event.type == pg.QUIT:
                     sys.exit()
 
+            current_phase = self.get_phase()
+            current_phase_grayscale = self.grayscale_convert(
+                255 * current_phase / current_phase.max()
+            )
+
     def get_phase(self):
         img_CCD = self.microscope.acquire()
 
