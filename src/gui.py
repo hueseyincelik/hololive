@@ -89,3 +89,8 @@ class GUI:
             sideband_position[1] - int(sideband_distance / 6) : sideband_position[1]
             + int(sideband_distance / 6),
         ]
+
+        padding = np.abs(img_cut_out.shape[0] - self.dimension) // 2
+        img_zero_padded = np.pad(
+            img_cut_out, ((padding, padding), (padding, padding)), constant_values=0
+        )
