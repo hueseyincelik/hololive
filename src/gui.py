@@ -12,23 +12,13 @@ from . import microscope
 
 
 class GUI:
-    def __init__(
-        self,
-        ip,
-        port,
-        camera="CCD",
-        exposure_time=0.2,
-        auto_correlation_buffer=50,
-        dimension=512,
-    ):
+    def __init__(self, ip, port, camera="CCD", exposure_time=0.2, dimension=512):
         self.dimension = dimension
 
         self.microscope = microscope.Microscope(ip, port)
         self.microscope.configure_camera(camera, exposure_time)
 
-        self.auto_correlation_buffer = auto_correlation_buffer
-
-        self.sideband_quadrant = "upper_left"
+        self.sideband_quadrant, self.auto_correlation_buffer = "upper_left", 50
         self.sideband_position, self.sideband_distance = (0, 0), 0
         self.sideband_lock = False
 
@@ -56,6 +46,11 @@ class GUI:
                         self.sideband_quadrant = "upper_left"
                     if event.key == pg.K_DOWN:
                         self.sideband_quadrant = "lower_right"
+
+                    if event.key == pg.K_PLUS:
+                        self.auto_correlation_buffer += 5
+                    if event.key == pg.K_MINUS and self.auto_correlation_buffer >= 5:
+                        self.auto_correlation_buffer -= 5
 
             current_phase = self.get_phase()
             current_phase_grayscale = self.grayscale_convert(
