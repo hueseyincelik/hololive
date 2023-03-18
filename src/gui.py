@@ -51,3 +51,6 @@ class GUI:
 		sideband_distance = np.linalg.norm(np.asarray([int(p / 2) - 1 for p in img_shift_cropped.shape[::-1]]) - np.asarray(sideband_position[::-1]))
 
 		img_cut_out = img_fft_shifted[sideband_position[0] - int(sideband_distance / 6):sideband_position[0] + int(sideband_distance / 6), sideband_position[1] - int(sideband_distance / 6):sideband_position[1] + int(sideband_distance / 6)]
+
+		padding = np.abs(img_cut_out.shape[0] - self.dimension)//2
+		img_zero_padded = np.pad(img_cut_out, ((padding, padding), (padding, padding)), constant_values=0)
