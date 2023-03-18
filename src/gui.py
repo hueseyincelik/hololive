@@ -56,3 +56,12 @@ class GUI:
 		img_zero_padded = np.pad(img_cut_out, ((padding, padding), (padding, padding)), constant_values=0)
 
 		return np.angle(sfft.ifft2(img_zero_padded)).swapaxes(0, 1)
+
+	def grayscale_convert(self, image):
+		image = 255 * (image / image.max())
+		w, h = image.shape
+
+		image_gray = np.empty((w, h, 3), dtype=np.uint8)
+		image_gray[:, :, 2] = image_gray[:, :, 1] = image_gray[:, :, 0] = image
+
+		return image_gray
