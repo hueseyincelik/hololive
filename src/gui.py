@@ -54,3 +54,5 @@ class GUI:
 
 		padding = np.abs(img_cut_out.shape[0] - self.dimension)//2
 		img_zero_padded = np.pad(img_cut_out, ((padding, padding), (padding, padding)), constant_values=0)
+
+		return np.angle(sfft.ifft2(img_zero_padded)).swapaxes(0, 1)
