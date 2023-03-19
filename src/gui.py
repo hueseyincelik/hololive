@@ -1,3 +1,4 @@
+import itertools as it
 import os
 import sys
 
@@ -18,9 +19,15 @@ class GUI:
         self.microscope = microscope.Microscope(ip, port)
         self.microscope.configure_camera(camera, exposure_time)
 
-        self.sideband_quadrant, self.auto_correlation_buffer = "upper_left", 50
         self.sideband_position, self.sideband_distance = (0, 0), 0
+        self.sideband_quadrant = "upper_left"
         self.sideband_lock = False
+
+        self.amplifications, self.phase_amplification = (
+            it.islice(it.cycle([1, 2, 3, 4]), 1, None),
+            1,
+        )
+        self.auto_correlation_buffer = 50
 
         pg.init()
 
@@ -55,7 +62,10 @@ class GUI:
                     if event.key == pg.K_MINUS and self.auto_correlation_buffer >= 5:
                         self.auto_correlation_buffer -= 5
 
-            current_phase = self.get_phase()
+                    if event.key == pg.K_a:
+                        self.phase_amplification = next(self.amplifications)
+
+            current_phase = self.phase_amplification * self.get_phase()
             current_phase_grayscale = self.grayscale_convert(
                 255 * current_phase / current_phase.max()
             )
@@ -64,9 +74,10 @@ class GUI:
             self.screen.blit(surface_phase_image, (0, 0))
 
             for coordinate, message in zip(
-                [(5, 5), (5, 25), (5, 45)],
+                [(5, 5), (5, 25), (5, 45), (5, 65)],
                 [
                     f"Quadrant: {self.sideband_quadrant}",
+                    f"Amplification: {self.phase_amplification}",
                     f"Locking: {self.sideband_lock}",
                     f"Buffer: {self.auto_correlation_buffer}",
                 ],
