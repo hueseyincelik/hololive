@@ -1,9 +1,12 @@
 import itertools as it
 import os
 import sys
+from datetime import datetime
+from threading import Thread
 
 import numpy as np
 import scipy.fft as sfft
+from tifffile import imwrite
 
 os.environ["PYGAME_HIDE_SUPPORT_PROMPT"] = "hide"
 
@@ -65,12 +68,20 @@ class GUI:
                     if event.key == pg.K_a:
                         self.phase_amplification = next(self.amplifications)
 
-            current_phase = self.phase_amplification * self.get_phase()
-            current_phase_grayscale = self.grayscale_convert(
-                255 * current_phase / current_phase.max()
+                    if event.key == pg.K_s:
+                        self.save_screenshot_thread = Thread(
+                            target=self.save_screenshot
+                        )
+                        self.save_screenshot_thread.start()
+
+            self.current_phase = self.phase_amplification * self.get_phase()
+            self.current_phase_grayscale = self.grayscale_convert(
+                255 * self.current_phase / self.current_phase.max()
             )
 
-            surface_phase_image = pg.surfarray.make_surface(current_phase_grayscale)
+            surface_phase_image = pg.surfarray.make_surface(
+                self.current_phase_grayscale
+            )
             self.screen.blit(surface_phase_image, (0, 0))
 
             for coordinate, message in zip(
@@ -146,3 +157,10 @@ class GUI:
         image_gray[:, :, 2] = image_gray[:, :, 1] = image_gray[:, :, 0] = image
 
         return image_gray
+
+    def save_screenshot(self, datatype=np.float32, photometric="minisblack"):
+        imwrite(
+            f"hololive_{format(datetime.now(), '%Y-%m-%d_%H-%M-%S')}.tif",
+            self.current_phase.astype(datatype),
+            photometric=photometric,
+        )
