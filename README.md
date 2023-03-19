@@ -19,9 +19,10 @@ python3 main.py
 In order to remotely connect to the microscope, `temscript` has to be running on the accompanying PC (which in turn requires the TEMScripting software interface from Thermo Fisher Scientific™ and FEI™) and the corresponding IP address and port have to be provided.
 
 Various keyboard shortcuts can be used to adjust some of the parameters used for the live phase reconstruction:
-- `L` can be used to lock the sideband position, preventing the sideband position from being automatically recalculated until the lock is released again
-- `+/-` can be used to adjust the buffer around the image quadrant, which is trimmed off in order to avoid the influence of the autocorrelation during the automatic sideband detection, in steps of 5
+- `L` can be used to lock the sideband position, preventing it from being automatically recalculated until the lock is released again
+- `+/-` can be used to adjust the buffer around the image quadrant, which is trimmed off in order to avoid the influence of the autocorrelation during the automatic sideband detection, in steps of 5px
 - `UP,DOWN,LEFT,RIGHT` can be used to change the image quadrant in which the sideband is automatically detected
+- `A` can be used to cycle between the values $1,2,3,4$ as an amplification factor for the reconstructed phase
 
 Although *HoloLive* should in principle work with any detector supported by `temscript`, it has only been tested with a Gatan™ US1000 CCD.
 
