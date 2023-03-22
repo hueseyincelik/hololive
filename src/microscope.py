@@ -1,10 +1,14 @@
-from temscript import RemoteMicroscope
+import temscript
 
 
 class Microscope:
-    def __init__(self, ip, port):
+    def __init__(self, ip, port, remote):
         self.ip, self.port = ip, port
-        self.microscope = RemoteMicroscope((self.ip, self.port))
+        self.microscope = (
+            temscript.RemoteMicroscope((self.ip, self.port))
+            if remote
+            else temscript.Microscope()
+        )
 
     def configure_camera(self, camera, exposure_time):
         self.camera, self.exposure_time = camera, exposure_time

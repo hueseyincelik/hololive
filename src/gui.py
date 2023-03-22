@@ -16,10 +16,12 @@ from . import microscope
 
 
 class GUI:
-    def __init__(self, ip, port, camera="CCD", exposure_time=0.2, dimension=512):
+    def __init__(
+        self, ip, port, remote=True, camera="CCD", exposure_time=0.2, dimension=512
+    ):
         self.dimension = dimension
 
-        self.microscope = microscope.Microscope(ip, port)
+        self.microscope = microscope.Microscope(ip, port, remote)
         self.microscope.configure_camera(camera, exposure_time)
 
         self.sideband_position, self.sideband_distance = (0, 0), 0
