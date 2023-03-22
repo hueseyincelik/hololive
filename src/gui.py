@@ -6,6 +6,7 @@ from threading import Thread
 
 import numpy as np
 import scipy.fft as sfft
+from skimage.filters import window
 from tifffile import imwrite
 
 os.environ["PYGAME_HIDE_SUPPORT_PROMPT"] = "hide"
@@ -32,14 +33,14 @@ class GUI:
         self.microscope.configure_camera(camera, exposure_time, binning)
 
         self.sideband_position, self.sideband_distance = (0, 0), 0
-        self.sideband_quadrant = "upper_left"
+        self.sideband_quadrant = "upper_right"
         self.sideband_lock = False
 
         self.amplifications, self.phase_amplification = (
             it.islice(it.cycle([1, 2, 3, 4]), 1, None),
             1,
         )
-        self.auto_correlation_buffer = 50
+        self.auto_correlation_buffer, self.hann_smoothing = 50, True
 
         self.pause = False
 
@@ -88,6 +89,9 @@ class GUI:
                     if event.key == pg.K_p:
                         self.pause = not self.pause
 
+                    if event.key == pg.K_h:
+                        self.hann_smoothing = not self.hann_smoothing
+
             if not self.pause:
                 self.current_phase = (
                     np.angle(np.exp(1j * self.phase_amplification * self.get_phase()))
@@ -104,9 +108,10 @@ class GUI:
             self.screen.blit(surface_phase_image, (0, 0))
 
             for coordinate, message in zip(
-                [(5, 5), (5, 25), (5, 45), (5, 65)],
+                [(5, 5), (5, 25), (5, 45), (5, 65), (5, 85)],
                 [
                     f"Quadrant: {self.sideband_quadrant}",
+                    f"Smoothing: {self.hann_smoothing}",
                     f"Amplification: {self.phase_amplification}",
                     f"Locking: {self.sideband_lock}",
                     f"Buffer: {self.auto_correlation_buffer}",
@@ -160,6 +165,9 @@ class GUI:
             - int(self.sideband_distance / 6) : self.sideband_position[1]
             + int(self.sideband_distance / 6),
         ]
+
+        if self.hann_smoothing:
+            img_cut_out *= window("hann", img_cut_out.shape)
 
         padding = np.abs(img_cut_out.shape[0] - self.dimension) // 2
         img_zero_padded = np.pad(
