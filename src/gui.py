@@ -27,6 +27,8 @@ class GUI:
 		self.amplifications, self.phase_amplification = it.islice(it.cycle([1, 2, 3, 4]), 1, None), 1
 		self.auto_correlation_buffer = 50
 
+		self.pause = False
+
 		pg.init()
 
 		self.screen, self.font = pg.display.set_mode((self.dimension, self.dimension)), pg.freetype.SysFont(None, 18)
@@ -64,8 +66,12 @@ class GUI:
 						self.save_screenshot_thread = Thread(target=self.save_screenshot)
 						self.save_screenshot_thread.start()
 
-			self.current_phase = np.angle(np.exp(1j * self.phase_amplification * self.get_phase())) if self.phase_amplification != 1 else self.get_phase()
-			self.current_phase_grayscale = self.grayscale_convert(255 * self.current_phase / self.current_phase.max())
+					if event.key == pg.K_p:
+						self.pause = not self.pause
+
+			if not self.pause:
+				self.current_phase = np.angle(np.exp(1j * self.phase_amplification * self.get_phase())) if self.phase_amplification != 1 else self.get_phase()
+				self.current_phase_grayscale = self.grayscale_convert(255 * self.current_phase / self.current_phase.max())
 
 			surface_phase_image = pg.surfarray.make_surface(self.current_phase_grayscale)
 			self.screen.blit(surface_phase_image, (0, 0))
