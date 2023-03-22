@@ -24,6 +24,7 @@ Various keyboard shortcuts can be used to adjust some of the parameters used for
 - `UP,DOWN,LEFT,RIGHT` can be used to change the image quadrant in which the sideband is automatically detected
 - `A` can be used to cycle between the values $1,2,3,4$ as an amplification factor for the reconstructed phase
 - `S` can be used to save a screenshot of the currently reconstructed phase as a timestamped 32-Bit float TIFF image
+- `P` can be used to pause the acquisition of new phase images
 
 Although *HoloLive* should in principle work with any detector supported by `temscript`, it has only been tested with a Gatan™ US1000 CCD.
 
