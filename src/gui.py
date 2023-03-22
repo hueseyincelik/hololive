@@ -47,10 +47,10 @@ class GUI:
         pg.init()
 
         self.screen, self.font = (
-            pg.display.set_mode((self.dimension, self.dimension)),
+            pg.display.set_mode((self.dimension, self.dimension), pg.RESIZABLE),
             pg.freetype.SysFont(None, 18),
         )
-        pg.display.set_caption("Live Phase")
+        pg.display.set_caption("HoloLive")
 
         self.run()
 
@@ -59,6 +59,8 @@ class GUI:
             for event in pg.event.get():
                 if event.type == pg.QUIT:
                     sys.exit()
+                elif event.type == pg.VIDEORESIZE:
+                    self.screen = pg.display.set_mode((event.w, event.h), pg.RESIZABLE)
                 elif event.type == pg.KEYDOWN:
                     if event.key == pg.K_l:
                         self.sideband_lock = not self.sideband_lock
@@ -102,8 +104,9 @@ class GUI:
                     255 * self.current_phase / self.current_phase.max()
                 )
 
-            surface_phase_image = pg.surfarray.make_surface(
-                self.current_phase_grayscale
+            surface_phase_image = pg.transform.smoothscale(
+                pg.surfarray.make_surface(self.current_phase_grayscale),
+                pg.display.get_surface().get_size(),
             )
             self.screen.blit(surface_phase_image, (0, 0))
 
