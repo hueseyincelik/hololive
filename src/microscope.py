@@ -10,10 +10,10 @@ class Microscope:
             else temscript.Microscope()
         )
 
-    def configure_camera(self, camera, exposure_time):
-        self.camera, self.exposure_time = camera, exposure_time
+    def configure_camera(self, camera, exposure_time, binning):
+        self.camera, self.exposure_time, self.binning = camera, exposure_time, binning
         self.microscope.set_camera_param(
-            self.camera, {"exposure(s)": self.exposure_time}
+            self.camera, {"exposure(s)": self.exposure_time, "binning": self.binning}
         )
 
     def acquire(self):
