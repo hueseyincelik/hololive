@@ -23,7 +23,7 @@ class GUI:
 		self.microscope.configure_camera(camera, exposure_time, binning)
 
 		self.sideband_position, self.sideband_distance = (0, 0), 0
-		self.sideband_quadrant = 'upper_right'
+		self.sideband_quadrant = 'top'
 		self.sideband_lock = False
 
 		self.amplifications, self.phase_amplification = it.islice(it.cycle([1, 2, 3, 4]), 1, None), 1
@@ -47,14 +47,14 @@ class GUI:
 					if event.key == pg.K_l:
 						self.sideband_lock = not self.sideband_lock
 
-					if event.key == pg.K_LEFT:
-						self.sideband_quadrant ='lower_left'
-					if event.key == pg.K_RIGHT:
-						self.sideband_quadrant = 'upper_right'
 					if event.key == pg.K_UP:
-						self.sideband_quadrant = 'upper_left'
+						self.sideband_quadrant = 'top'
 					if event.key == pg.K_DOWN:
-						self.sideband_quadrant = 'lower_right'
+						self.sideband_quadrant = 'bottom'
+					if event.key == pg.K_LEFT:
+						self.sideband_quadrant ='left'
+					if event.key == pg.K_RIGHT:
+						self.sideband_quadrant = 'right'
 
 					if event.key == pg.K_PLUS:
 						self.auto_correlation_buffer += 5
@@ -81,7 +81,7 @@ class GUI:
 			surface_phase_image = pg.surfarray.make_surface(self.current_phase_grayscale)
 			self.screen.blit(surface_phase_image, (0, 0))
 
-			for coordinate, message in zip([(5, 5), (5, 25), (5, 45), (5, 65), (5, 85)], [f"Quadrant: {self.sideband_quadrant}", f"Smoothing: {self.hann_smoothing}", f"Amplification: {self.phase_amplification}", f"Locking: {self.sideband_lock}", f"Buffer: {self.auto_correlation_buffer}"]):
+			for coordinate, message in zip([(5, 5), (5, 25), (5, 65), (5, 85), (5, 105)], [f"Quadrant: {self.sideband_quadrant}", f"Locking: {self.sideband_lock}", f"Smoothing: {self.hann_smoothing}", f"Amplification: {self.phase_amplification}", f"Buffer: {self.auto_correlation_buffer}"]):
 				self.font.render_to(self.screen, coordinate, message, pg.Color('RED'))
 
 			pg.display.flip()
@@ -92,18 +92,18 @@ class GUI:
 		img_fft = sfft.fft2(img_CCD)
 		img_fft_shifted = sfft.fftshift(img_fft)
 
-		if self.sideband_quadrant == 'upper_left':
-			img_shift_cropped = img_fft_shifted[:img_fft_shifted.shape[0]//2 - self.auto_correlation_buffer, :img_fft_shifted.shape[1]//2 - self.auto_correlation_buffer]
-		elif self.sideband_quadrant == 'upper_right':
-			img_shift_cropped = img_fft_shifted[:img_fft_shifted.shape[0]//2 - self.auto_correlation_buffer, img_fft_shifted.shape[1]//2 + self.auto_correlation_buffer:]
-		elif self.sideband_quadrant == 'lower_left':
-			img_shift_cropped = img_fft_shifted[img_fft_shifted.shape[0]//2 + self.auto_correlation_buffer:, :img_fft_shifted.shape[1]//2 - self.auto_correlation_buffer]
-		elif self.sideband_quadrant == 'lower_right':
-			img_shift_cropped = img_fft_shifted[img_fft_shifted.shape[0]//2 + self.auto_correlation_buffer:, img_fft_shifted.shape[1]//2 + self.auto_correlation_buffer:]
+		if self.sideband_quadrant == 'top':
+			img_shift_cropped = img_fft_shifted[:img_fft_shifted.shape[0]//2 - self.auto_correlation_buffer, :]
+		elif self.sideband_quadrant == 'bottom':
+			img_shift_cropped = img_fft_shifted[img_fft_shifted.shape[0]//2 + self.auto_correlation_buffer:, :]
+		elif self.sideband_quadrant == 'left':
+			img_shift_cropped = img_fft_shifted[:, :img_fft_shifted.shape[1]//2 - self.auto_correlation_buffer]
+		elif self.sideband_quadrant == 'right':
+			img_shift_cropped = img_fft_shifted[:, img_fft_shifted.shape[1]//2 + self.auto_correlation_buffer:]
 
 		if not self.sideband_lock:
 			self.sideband_position = np.argwhere(img_fft_shifted == img_shift_cropped.max())[0]
-			self.sideband_distance = np.linalg.norm(np.asarray([int(p / 2) - 1 for p in img_shift_cropped.shape[::-1]]) - np.asarray(self.sideband_position[::-1]))
+			self.sideband_distance = np.linalg.norm(np.asarray(img_fft_shifted.shape) / 2 - self.sideband_position)
 
 		img_cut_out = img_fft_shifted[self.sideband_position[0] - int(self.sideband_distance / 6):self.sideband_position[0] + int(self.sideband_distance / 6), self.sideband_position[1] - int(self.sideband_distance / 6):self.sideband_position[1] + int(self.sideband_distance / 6)]
 
