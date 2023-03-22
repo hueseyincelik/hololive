@@ -1,6 +1,8 @@
-from tifffile import imwrite
+from skimage.filters import window
 import scipy.fft as sfft
 import numpy as np
+
+from tifffile import imwrite
 
 import itertools as it
 import os, sys
@@ -21,11 +23,11 @@ class GUI:
 		self.microscope.configure_camera(camera, exposure_time, binning)
 
 		self.sideband_position, self.sideband_distance = (0, 0), 0
-		self.sideband_quadrant = 'upper_left'
+		self.sideband_quadrant = 'upper_right'
 		self.sideband_lock = False
 
 		self.amplifications, self.phase_amplification = it.islice(it.cycle([1, 2, 3, 4]), 1, None), 1
-		self.auto_correlation_buffer = 50
+		self.auto_correlation_buffer, self.hann_smoothing = 50, True
 
 		self.pause = False
 
@@ -69,6 +71,9 @@ class GUI:
 					if event.key == pg.K_p:
 						self.pause = not self.pause
 
+					if event.key == pg.K_h:
+						self.hann_smoothing = not self.hann_smoothing
+
 			if not self.pause:
 				self.current_phase = np.angle(np.exp(1j * self.phase_amplification * self.get_phase())) if self.phase_amplification != 1 else self.get_phase()
 				self.current_phase_grayscale = self.grayscale_convert(255 * self.current_phase / self.current_phase.max())
@@ -76,7 +81,7 @@ class GUI:
 			surface_phase_image = pg.surfarray.make_surface(self.current_phase_grayscale)
 			self.screen.blit(surface_phase_image, (0, 0))
 
-			for coordinate, message in zip([(5, 5), (5, 25), (5, 45), (5, 65)], [f"Quadrant: {self.sideband_quadrant}", f"Amplification: {self.phase_amplification}", f"Locking: {self.sideband_lock}", f"Buffer: {self.auto_correlation_buffer}"]):
+			for coordinate, message in zip([(5, 5), (5, 25), (5, 45), (5, 65), (5, 85)], [f"Quadrant: {self.sideband_quadrant}", f"Smoothing: {self.hann_smoothing}", f"Amplification: {self.phase_amplification}", f"Locking: {self.sideband_lock}", f"Buffer: {self.auto_correlation_buffer}"]):
 				self.font.render_to(self.screen, coordinate, message, pg.Color('RED'))
 
 			pg.display.flip()
@@ -101,6 +106,9 @@ class GUI:
 			self.sideband_distance = np.linalg.norm(np.asarray([int(p / 2) - 1 for p in img_shift_cropped.shape[::-1]]) - np.asarray(self.sideband_position[::-1]))
 
 		img_cut_out = img_fft_shifted[self.sideband_position[0] - int(self.sideband_distance / 6):self.sideband_position[0] + int(self.sideband_distance / 6), self.sideband_position[1] - int(self.sideband_distance / 6):self.sideband_position[1] + int(self.sideband_distance / 6)]
+
+		if self.hann_smoothing:
+				img_cut_out *= window('hann', img_cut_out.shape)
 
 		padding = np.abs(img_cut_out.shape[0] - self.dimension)//2
 		img_zero_padded = np.pad(img_cut_out, ((padding, padding), (padding, padding)), constant_values=0)

@@ -23,6 +23,7 @@ Various keyboard shortcuts can be used to adjust some of the parameters used for
 - `+/-` can be used to adjust the buffer around the image quadrant, which is trimmed off in order to avoid the influence of the autocorrelation during the automatic sideband detection, in steps of $5~\text{px}$
 - `UP,DOWN,LEFT,RIGHT` can be used to change the image quadrant in which the sideband is automatically detected
 - `A` can be used to cycle between the values $1,2,3,4$ as an amplification factor for the reconstructed phase
+- `H` can be used to apply Hann smoothing to the sideband cut-out before zero padding
 - `S` can be used to save a screenshot of the currently reconstructed phase as a timestamped 32-Bit float TIFF image
 - `P` can be used to pause the acquisition of new phase images
 
