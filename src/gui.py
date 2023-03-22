@@ -83,7 +83,11 @@ class GUI:
                         )
                         self.save_screenshot_thread.start()
 
-            self.current_phase = self.phase_amplification * self.get_phase()
+            self.current_phase = (
+                np.angle(np.exp(1j * self.phase_amplification * self.get_phase()))
+                if self.phase_amplification != 1
+                else self.get_phase()
+            )
             self.current_phase_grayscale = self.grayscale_convert(
                 255 * self.current_phase / self.current_phase.max()
             )
