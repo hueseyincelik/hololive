@@ -29,6 +29,7 @@ class GUI:
 		self.amplifications, self.phase_amplification = it.islice(it.cycle([1, 2, 3, 4]), 1, None), 1
 		self.auto_correlation_buffer, self.hann_smoothing = 50, True
 
+		self.reconstruct_amplitude = False
 		self.pause = False
 
 		pg.init()
@@ -62,6 +63,9 @@ class GUI:
 						self.auto_correlation_buffer += 5
 					if event.key == pg.K_MINUS and self.auto_correlation_buffer >= 5:
 						self.auto_correlation_buffer -= 5
+
+					if event.key == pg.K_TAB:
+						self.reconstruct_amplitude = not self.reconstruct_amplitude
 
 					if event.key == pg.K_a:
 						self.phase_amplification = next(self.amplifications)
@@ -117,7 +121,7 @@ class GUI:
 		padding = np.abs(img_cut_out.shape[0] - self.dimension)//2
 		img_zero_padded = np.pad(img_cut_out, ((padding, padding), (padding, padding)), constant_values=0)
 
-		return np.angle(sfft.ifft2(img_zero_padded)).swapaxes(0, 1)
+		return np.abs(sfft.ifft2(img_zero_padded)).swapaxes(0, 1) if self.reconstruct_amplitude else np.angle(sfft.ifft2(img_zero_padded)).swapaxes(0, 1)
 
 	def grayscale_convert(self, image):
 		image = 255 * (image / image.max())
