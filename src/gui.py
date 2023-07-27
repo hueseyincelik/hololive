@@ -155,13 +155,16 @@ class GUI:
                 np.asarray(img_fft_shifted.shape) / 2 - self.sideband_position
             )
 
+        cut_out_idx = [
+            [
+                int(np.clip(sb_pos - self.sideband_distance / 6, 0, img_dim - 1)),
+                int(np.clip(sb_pos + self.sideband_distance / 6, 0, img_dim - 1)),
+            ]
+            for (sb_pos, img_dim) in zip(self.sideband_position, img_fft_shifted.shape)
+        ]
+
         img_cut_out = img_fft_shifted[
-            self.sideband_position[0]
-            - int(self.sideband_distance / 6) : self.sideband_position[0]
-            + int(self.sideband_distance / 6),
-            self.sideband_position[1]
-            - int(self.sideband_distance / 6) : self.sideband_position[1]
-            + int(self.sideband_distance / 6),
+            cut_out_idx[0][0] : cut_out_idx[0][1], cut_out_idx[1][0] : cut_out_idx[1][1]
         ]
 
         if self.hann_smoothing:
