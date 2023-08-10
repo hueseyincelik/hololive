@@ -10,6 +10,12 @@ class Microscope:
             else temscript.Microscope()
         )
 
+    def __del__(self):
+        if self.camera is not None:
+            self.microscope.set_camera_param(
+                self.camera, {"exposure(s)": 4.0, "binning": 1}
+            )
+
     def configure_camera(self, camera, exposure_time, binning):
         self.camera, self.exposure_time, self.binning = camera, exposure_time, binning
         self.microscope.set_camera_param(
