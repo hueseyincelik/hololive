@@ -42,6 +42,8 @@ class GUI:
         )
         self.auto_correlation_buffer, self.hann_smoothing = 50, True
 
+        self.fringe_contrast = 0
+
         self.reconstruct_amplitude = False
         self.pause = False
 
@@ -115,13 +117,13 @@ class GUI:
             self.screen.blit(surface_phase_image, (0, 0))
 
             for coordinate, message in zip(
-                [(5, 5), (5, 25), (5, 65), (5, 85), (5, 105)],
+                [(5, 5), (5, 25), (5, 45), (5, 85), (5, 105)],
                 [
-                    f"Quadrant: {self.sideband_quadrant}",
-                    f"Locking: {self.sideband_lock}",
                     f"Smoothing: {self.hann_smoothing}",
                     f"Amplification: {self.phase_amplification}",
                     f"Buffer: {self.auto_correlation_buffer}",
+                    f"Sideband: {self.sideband_quadrant}{' (L)' if self.sideband_lock else ''}",
+                    f"Contrast: {np.round(100 * self.fringe_contrast, 2)}%",
                 ],
             ):
                 self.font.render_to(self.screen, coordinate, message, pg.Color("RED"))
@@ -158,6 +160,16 @@ class GUI:
             self.sideband_distance = np.linalg.norm(
                 np.asarray(img_fft_shifted.shape) / 2 - self.sideband_position
             )
+
+        self.fringe_contrast = (
+            2
+            * np.abs(img_fft_shifted[*self.sideband_position])
+            / np.abs(
+                img_fft_shifted[
+                    img_fft_shifted.shape[0] // 2, img_fft_shifted.shape[0] // 2
+                ]
+            )
+        )
 
         cut_out_idx = [
             [
