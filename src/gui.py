@@ -29,6 +29,8 @@ class GUI:
 		self.amplifications, self.phase_amplification = it.islice(it.cycle([1, 2, 3, 4]), 1, None), 1
 		self.auto_correlation_buffer, self.hann_smoothing = 50, True
 
+		self.fringe_contrast = 0
+
 		self.reconstruct_amplitude = False
 		self.pause = False
 
@@ -87,7 +89,7 @@ class GUI:
 			surface_phase_image = pg.transform.smoothscale(pg.surfarray.make_surface(self.current_phase_grayscale), pg.display.get_surface().get_size())
 			self.screen.blit(surface_phase_image, (0, 0))
 
-			for coordinate, message in zip([(5, 5), (5, 25), (5, 65), (5, 85), (5, 105)], [f"Quadrant: {self.sideband_quadrant}", f"Locking: {self.sideband_lock}", f"Smoothing: {self.hann_smoothing}", f"Amplification: {self.phase_amplification}", f"Buffer: {self.auto_correlation_buffer}"]):
+			for coordinate, message in zip([(5, 5), (5, 25), (5, 45), (5, 85), (5, 105)], [f"Smoothing: {self.hann_smoothing}", f"Amplification: {self.phase_amplification}", f"Buffer: {self.auto_correlation_buffer}", f"Sideband: {self.sideband_quadrant}{' (L)' if self.sideband_lock else ''}", f"Contrast: {np.round(100 * self.fringe_contrast, 2)}%"]):
 				self.font.render_to(self.screen, coordinate, message, pg.Color('RED'))
 
 			pg.display.flip()
@@ -110,6 +112,8 @@ class GUI:
 		if not self.sideband_lock:
 			self.sideband_position = np.argwhere(img_fft_shifted == img_shift_cropped.max())[0]
 			self.sideband_distance = np.linalg.norm(np.asarray(img_fft_shifted.shape) / 2 - self.sideband_position)
+
+		self.fringe_contrast = 2 * np.abs(img_fft_shifted[*self.sideband_position]) / np.abs(img_fft_shifted[img_fft_shifted.shape[0] // 2, img_fft_shifted.shape[0] // 2])
 
 		cut_out_idx = [[int(np.clip(sb_pos - self.sideband_distance / 6, 0, img_dim - 1)), int(np.clip(sb_pos + self.sideband_distance / 6, 0, img_dim - 1))] for (sb_pos, img_dim) in zip(self.sideband_position, img_fft_shifted.shape)]
 
