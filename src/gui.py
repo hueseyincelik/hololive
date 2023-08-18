@@ -68,8 +68,9 @@ class GUI:
 
 					if event.key == pg.K_TAB:
 						self.reconstruct_amplitude = not self.reconstruct_amplitude
+						self.amplifications, self.phase_amplification = it.islice(it.cycle([1, 2, 3, 4]), 1, None), 1
 
-					if event.key == pg.K_a:
+					if event.key == pg.K_a and not self.reconstruct_amplitude:
 						self.phase_amplification = next(self.amplifications)
 
 					if event.key == pg.K_s:
@@ -83,7 +84,7 @@ class GUI:
 						self.hann_smoothing = not self.hann_smoothing
 
 			if not self.pause:
-				self.current_phase = np.angle(np.exp(1j * self.phase_amplification * self.get_phase())) if self.phase_amplification != 1 else self.get_phase()
+				self.current_phase = np.angle(np.exp(1j * self.phase_amplification * self.reconstruct())) if self.phase_amplification != 1 and not self.reconstruct_amplitude else self.reconstruct()
 				self.current_phase_grayscale = self.grayscale_convert(255 * self.current_phase / self.current_phase.max())
 
 			surface_phase_image = pg.transform.smoothscale(pg.surfarray.make_surface(self.current_phase_grayscale), pg.display.get_surface().get_size())
@@ -94,7 +95,7 @@ class GUI:
 
 			pg.display.flip()
 
-	def get_phase(self):
+	def reconstruct(self):
 		img_CCD = self.microscope.acquire()
 
 		img_fft = sfft.fft2(img_CCD)
@@ -122,7 +123,7 @@ class GUI:
 		if self.hann_smoothing:
 				img_cut_out *= window('hann', img_cut_out.shape)
 
-		padding = np.abs(img_cut_out.shape[0] - self.dimension)//2
+		padding = np.abs(img_cut_out.shape[0] - self.dimension) // 2
 		img_zero_padded = np.pad(img_cut_out, ((padding, padding), (padding, padding)), constant_values=0)
 
 		return np.abs(sfft.ifft2(img_zero_padded)).swapaxes(0, 1) if self.reconstruct_amplitude else np.angle(sfft.ifft2(img_zero_padded)).swapaxes(0, 1)
