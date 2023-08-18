@@ -84,8 +84,12 @@ class GUI:
 
                     if event.key == pg.K_TAB:
                         self.reconstruct_amplitude = not self.reconstruct_amplitude
+                        self.amplifications, self.phase_amplification = (
+                            it.islice(it.cycle([1, 2, 3, 4]), 1, None),
+                            1,
+                        )
 
-                    if event.key == pg.K_a:
+                    if event.key == pg.K_a and not self.reconstruct_amplitude:
                         self.phase_amplification = next(self.amplifications)
 
                     if event.key == pg.K_s:
@@ -102,9 +106,9 @@ class GUI:
 
             if not self.pause:
                 self.current_phase = (
-                    np.angle(np.exp(1j * self.phase_amplification * self.get_phase()))
-                    if self.phase_amplification != 1
-                    else self.get_phase()
+                    np.angle(np.exp(1j * self.phase_amplification * self.reconstruct()))
+                    if self.phase_amplification != 1 and not self.reconstruct_amplitude
+                    else self.reconstruct()
                 )
                 self.current_phase_grayscale = self.grayscale_convert(
                     255 * self.current_phase / self.current_phase.max()
@@ -130,7 +134,7 @@ class GUI:
 
             pg.display.flip()
 
-    def get_phase(self):
+    def reconstruct(self):
         img_CCD = self.microscope.acquire()
 
         img_fft = sfft.fft2(img_CCD)
