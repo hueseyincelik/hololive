@@ -149,4 +149,4 @@ class GUI:
 		return image_gray
 
 	def save_screenshot(self, datatype=np.float32, photometric='minisblack'):
-		imwrite(f"hololive_{format(datetime.now(), '%Y-%m-%d_%H-%M-%S')}.tif", self.current_reconstruction.astype(datatype), photometric=photometric)
+		imwrite(f"HoloLive_{'PH' if not self.reconstruct_amplitude else 'AMP'}_{format(datetime.now(), '%Y-%m-%d_%H-%M-%S')}.tif", self.current_reconstruction.astype(datatype), photometric=photometric)
