@@ -117,9 +117,7 @@ class GUI:
                     else self.reconstruct()
                 ).swapaxes(0, 1)
                 self.current_reconstruction_grayscale = self.grayscale_convert(
-                    255
-                    * self.current_reconstruction
-                    / self.current_reconstruction.max()
+                    self.current_reconstruction
                 )
 
             surface_phase_image = pg.transform.smoothscale(
