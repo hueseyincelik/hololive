@@ -29,7 +29,7 @@ Various keyboard shortcuts can be used to adjust some of the parameters used for
 - `A` can be used to cycle between the values $1,2,3,4$ as an amplification factor for the reconstructed phase
 - `H` can be used to apply Hann smoothing to the sideband cut-out before zero padding
 - `R` can be used to utilize the current acquisition as a reference hologram during the reconstruction process (note that this also locks the sideband position)
-- `S` can be used to save a screenshot of the currently reconstructed phase/amplitude as a timestamped 32-Bit float TIFF image
+- `S` can be used to save a screenshot of the currently reconstructed phase/amplitude (including on-screen information) as a timestamped PNG image
 - `P` can be used to pause the acquisition of new phase/amplitude images
 
 Although *HoloLive* should in principle work with any detector supported by `temscript`, it has only been tested with a Gatan™ US1000 CCD.

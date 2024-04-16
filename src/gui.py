@@ -2,8 +2,6 @@ from skimage.filters import window
 import scipy.fft as sfft
 import numpy as np
 
-from tifffile import imwrite
-
 import itertools as it
 import os, sys
 
@@ -148,5 +146,5 @@ class GUI:
 
 		return image_gray
 
-	def save_screenshot(self, datatype=np.float32, photometric='minisblack'):
-		imwrite(f"HoloLive_{'PH' if not self.reconstruct_amplitude else 'AMP'}_{format(datetime.now(), '%Y-%m-%d_%H-%M-%S')}.tif", self.current_reconstruction.astype(datatype), photometric=photometric)
+	def save_screenshot(self, format='png'):
+		pg.image.save(self.screen, f"HoloLive_{'PH' if not self.reconstruct_amplitude else 'AMP'}_{format(datetime.now(), '%Y-%m-%d_%H-%M-%S')}.{format}")

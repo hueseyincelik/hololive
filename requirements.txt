@@ -3,4 +3,3 @@ numpy
 pygame
 temscript
 scikit-image
-tifffile
