@@ -91,7 +91,7 @@ class GUI:
 
 			if not self.pause:
 				self.current_reconstruction = (np.angle(np.exp(1j * self.phase_amplification * self.reconstruct())) if self.phase_amplification != 1 and not self.reconstruct_amplitude else self.reconstruct()).swapaxes(0, 1)
-				self.current_reconstruction_grayscale = self.grayscale_convert(255 * self.current_reconstruction / self.current_reconstruction.max())
+				self.current_reconstruction_grayscale = self.grayscale_convert(self.current_reconstruction)
 
 			surface_phase_image = pg.transform.smoothscale(pg.surfarray.make_surface(self.current_reconstruction_grayscale), pg.display.get_surface().get_size())
 			self.screen.blit(surface_phase_image, (0, 0))
