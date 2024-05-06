@@ -25,8 +25,10 @@ class GUI:
         exposure_time=0.2,
         binning=4,
         dimension=512,
+        real_FFT=False,
     ):
         self.dimension = dimension
+        self.real_FFT = real_FFT
 
         self.microscope = microscope.Microscope(ip, port, remote)
         self.microscope.configure_camera(camera, exposure_time, binning)
@@ -149,7 +151,11 @@ class GUI:
     def reconstruct(self):
         img_CCD = self.microscope.acquire()
 
-        img_fft = sfft.fft2(img_CCD)
+        img_fft = (
+            self.rfft2_to_fft2(img_CCD.shape, sfft.rfft2(img_CCD))
+            if self.real_FFT
+            else sfft.fft2(img_CCD)
+        )
         img_fft_shifted = sfft.fftshift(img_fft)
 
         if self.sideband_area == "upper":
@@ -204,6 +210,28 @@ class GUI:
             if self.reconstruct_amplitude
             else np.angle(reconstructed_image_wave)
         )
+
+    def rfft2_to_fft2(self, img_shape, img_rFFT):
+        fcols = img_shape[-1]
+        FFT_cols = img_rFFT.shape[-1]
+
+        full_FFT = np.zeros(img_shape, dtype=img_rFFT.dtype)
+        full_FFT[:, :FFT_cols] = img_rFFT
+
+        top = img_rFFT[0, 1:]
+
+        if fcols % 2 == 0:
+            full_FFT[0, FFT_cols - 1 :] = top[::-1].conj()
+            middle = img_rFFT[1:, 1:]
+            middle = np.hstack((middle, middle[::-1, ::-1][:, 1:].conj()))
+        else:
+            full_FFT[0, FFT_cols:] = top[::-1].conj()
+            middle = img_rFFT[1:, 1:]
+            middle = np.hstack((middle, middle[::-1, ::-1].conj()))
+
+        full_FFT[1:, 1:] = middle
+
+        return full_FFT
 
     def grayscale_convert(self, image):
         image = 255 * (image / image.max())
