@@ -10,7 +10,7 @@ from threading import Thread
 
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 
-from . import microscope
+from . import image, microscope
 import pygame as pg
 
 class GUI:
@@ -89,7 +89,7 @@ class GUI:
 				if self.phase_amplification != 1 and not self.reconstruct_amplitude:
 					self.current_reconstruction = np.angle(np.exp(1j * self.phase_amplification * self.current_reconstruction))
 
-				self.current_reconstruction_grayscale = self.grayscale_convert(self.current_reconstruction)
+				self.current_reconstruction_grayscale = image.grayscale_convert(self.current_reconstruction)
 
 			surface_phase_image = pg.transform.smoothscale(pg.surfarray.make_surface(self.current_reconstruction_grayscale), pg.display.get_surface().get_size())
 			self.screen.blit(surface_phase_image, (0, 0))
@@ -105,7 +105,7 @@ class GUI:
 	def reconstruct(self):
 		img_CCD = self.microscope.acquire()
 
-		img_fft = self.rfft2_to_fft2(img_CCD.shape, sfft.rfft2(img_CCD)) if self.real_FFT else sfft.fft2(img_CCD)
+		img_fft = image.rfft2_to_fft2(img_CCD.shape, sfft.rfft2(img_CCD)) if self.real_FFT else sfft.fft2(img_CCD)
 		img_fft_shifted = sfft.fftshift(img_fft)
 
 		if self.sideband_area == 'upper':
@@ -128,54 +128,12 @@ class GUI:
 		if self.hann_smoothing:
 				img_cutout *= filters.window('hann', img_cutout.shape)
 
-		img_cutout_padded = self.pad_image(img_cutout, (self.dimension, self.dimension), mode='constant', constant_values=0)
+		img_cutout_padded = image.pad_image(img_cutout, (self.dimension, self.dimension), mode='constant', constant_values=0)
 
 		self.object_image_wave = sfft.ifft2(img_cutout_padded)
 		reconstructed_image_wave = self.object_image_wave / self.reference_image_wave if self.reference_image_wave is not None else self.object_image_wave
 
 		return np.abs(reconstructed_image_wave) if self.reconstruct_amplitude else np.angle(reconstructed_image_wave)
-
-	def rfft2_to_fft2(self, img_shape, img_rFFT):
-		fcols = img_shape[-1]
-		FFT_cols = img_rFFT.shape[-1]
-
-		full_FFT = np.zeros(img_shape, dtype=img_rFFT.dtype)
-		full_FFT[:, :FFT_cols] = img_rFFT
-
-		top = img_rFFT[0, 1:]
-
-		if fcols % 2 == 0:
-			full_FFT[0, FFT_cols - 1:] = top[::-1].conj()
-			middle = img_rFFT[1:, 1:]
-			middle = np.hstack((middle, middle[::-1, ::-1][:, 1:].conj()))
-		else:
-			full_FFT[0, FFT_cols:] = top[::-1].conj()
-			middle = img_rFFT[1:, 1:]
-			middle = np.hstack((middle, middle[::-1, ::-1].conj()))
-
-		full_FFT[1:, 1:] = middle
-
-		return full_FFT
-
-	def pad_image(self, image, output_size, **kwargs):
-		pad_top = (output_size[0] - image.shape[0]) // 2
-		pad_bottom = (output_size[0] - image.shape[0]) - pad_top
-
-		pad_left = (output_size[1] - image.shape[1]) // 2
-		pad_right = (output_size[1] - image.shape[1]) - pad_left
-
-		padding = ((pad_top, pad_bottom), (pad_left, pad_right))
-
-		return np.pad(image, padding, **kwargs)
-
-	def grayscale_convert(self, image):
-		image = 255 * (image / image.max())
-		w, h = image.shape
-
-		image_gray = np.empty((w, h, 3), dtype=np.uint8)
-		image_gray[:, :, 2] = image_gray[:, :, 1] = image_gray[:, :, 0] = image
-
-		return image_gray
 
 	def save_screenshot(self, format='png'):
 		pg.image.save(self.screen, f"HoloLive_{'PH' if not self.reconstruct_amplitude else 'AMP'}_{format(datetime.now(), '%Y-%m-%d_%H-%M-%S')}.{format}")
