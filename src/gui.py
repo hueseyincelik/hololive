@@ -192,13 +192,14 @@ class GUI:
         if self.hann_smoothing:
             img_cutout *= filters.window("hann", img_cutout.shape)
 
-        padding = np.abs(img_cutout.shape[0] - self.dimension) // 2
-
-        self.object_image_wave = sfft.ifft2(
-            np.pad(
-                img_cutout, ((padding, padding), (padding, padding)), constant_values=0
-            )
+        img_cutout_padded = self.pad_image(
+            img_cutout,
+            (self.dimension, self.dimension),
+            mode="constant",
+            constant_values=0,
         )
+
+        self.object_image_wave = sfft.ifft2(img_cutout_padded)
         reconstructed_image_wave = (
             self.object_image_wave / self.reference_image_wave
             if self.reference_image_wave is not None
@@ -232,6 +233,17 @@ class GUI:
         full_FFT[1:, 1:] = middle
 
         return full_FFT
+
+    def pad_image(self, image, output_size, **kwargs):
+        pad_top = (output_size[0] - image.shape[0]) // 2
+        pad_bottom = (output_size[0] - image.shape[0]) - pad_top
+
+        pad_left = (output_size[1] - image.shape[1]) // 2
+        pad_right = (output_size[1] - image.shape[1]) - pad_left
+
+        padding = ((pad_top, pad_bottom), (pad_left, pad_right))
+
+        return np.pad(image, padding, **kwargs)
 
     def grayscale_convert(self, image):
         image = 255 * (image / image.max())
