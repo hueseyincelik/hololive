@@ -23,11 +23,12 @@ In order to remotely connect to the microscope, `temscript` has to be running on
 
 Various keyboard shortcuts can be used to adjust some of the parameters used for the live reconstruction:
 - `L` can be used to lock the sideband position, preventing it from being automatically recalculated until the lock is released again (note that disabling the sideband lock also resets/disables the reference hologram utilized during the reconstruction process)
-- `+/-` can be used to adjust the radius of the circle used to mask the centerband, which is zeroed in order to avoid the influence of the autocorrelation during the automatic sideband detection, in steps of $1$% of the (minimum) image dimension
 - `UP,DOWN` can be used to change the image area in which the sideband is automatically detected
+- `LEFT/RIGHT` can be used to adjust the radius of the circle used to mask the centerband, which is zeroed in order to avoid the influence of the autocorrelation during the automatic sideband detection, in steps of $1$% of the (minimum) image dimension
 - `TAB` can be used to switch between the reconstructed phase and amplitude
 - `A` can be used to cycle between the values $1,2,3,4$ as an amplification factor for the reconstructed phase
-- `H` can be used to apply Hann smoothing to the sideband cut-out before zero padding
+- `F` can be used to apply a $14^{\text{th}}$-order Butterworth filter to the sideband cut-out before zero padding
+- `+/-` can be used to increase the cutoff frequency of the Butterworth filter in steps $1$% of the sampling frequency
 - `R` can be used to utilize the current acquisition as a reference hologram during the reconstruction process (note that this also locks the sideband position)
 - `S` can be used to save a screenshot of the currently reconstructed phase/amplitude (including on-screen information) as a timestamped PNG image
 - `P` can be used to pause the acquisition of new phase/amplitude images
