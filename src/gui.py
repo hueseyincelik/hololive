@@ -6,7 +6,7 @@ from threading import Thread
 
 import numpy as np
 import scipy.fft as sfft
-from skimage import draw, filters
+from skimage import draw
 
 os.environ["PYGAME_HIDE_SUPPORT_PROMPT"] = "hide"
 
@@ -40,7 +40,8 @@ class GUI:
             it.islice(it.cycle([1, 2, 3, 4]), 1, None),
             1,
         )
-        self.centerband_mask, self.hann_smoothing = 5, True
+        self.butterworth_filter, self.butterworth_cutoff = True, 0.05
+        self.centerband_mask = 5
 
         self.object_image_wave, self.reference_image_wave = None, None
         self.fringe_contrast = 0
@@ -75,9 +76,9 @@ class GUI:
                     if event.key == pg.K_DOWN:
                         self.sideband_area = "lower"
 
-                    if event.key == pg.K_PLUS:
+                    if event.key == pg.K_RIGHT:
                         self.centerband_mask += 1
-                    if event.key == pg.K_MINUS and self.centerband_mask > 1:
+                    if event.key == pg.K_LEFT and self.centerband_mask > 1:
                         self.centerband_mask -= 1
 
                     if event.key == pg.K_TAB:
@@ -103,8 +104,13 @@ class GUI:
                     if event.key == pg.K_p:
                         self.pause = not self.pause
 
-                    if event.key == pg.K_h:
-                        self.hann_smoothing = not self.hann_smoothing
+                    if event.key == pg.K_f:
+                        self.butterworth_filter = not self.butterworth_filter
+
+                    if event.key == pg.K_PLUS and self.butterworth_cutoff <= 0.49:
+                        self.butterworth_cutoff += 0.01
+                    if event.key == pg.K_MINUS and self.butterworth_cutoff > 0.01:
+                        self.butterworth_cutoff -= 0.01
 
             if not self.pause:
                 self.current_reconstruction = self.reconstruct()
@@ -137,7 +143,7 @@ class GUI:
             for coordinate, message in zip(
                 [(5, 5), (5, 25), (5, 45), (5, 85), (5, 105)],
                 [
-                    f"Smoothing: {self.hann_smoothing}",
+                    f"Filter: {self.butterworth_filter} ({np.round(self.butterworth_cutoff, 2)})",
                     f"Amplification: {self.phase_amplification}",
                     f"Mask: {self.centerband_mask}%",
                     f"Sideband: {self.sideband_area}{' (L)' if self.sideband_lock else ''}",
@@ -189,8 +195,10 @@ class GUI:
         )
         img_cutout = img_fft_shifted[sb_rr, sb_cc]
 
-        if self.hann_smoothing:
-            img_cutout *= filters.window("hann", img_cutout.shape)
+        if self.butterworth_filter:
+            img_cutout *= image.butterworth_filter(
+                img_cutout.shape, self.butterworth_cutoff, order=14
+            )
 
         img_cutout_padded = image.pad_image(
             img_cutout,

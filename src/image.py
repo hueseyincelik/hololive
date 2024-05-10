@@ -36,6 +36,28 @@ def pad_image(image, output_size, **kwargs):
     return np.pad(image, padding, **kwargs)
 
 
+def butterworth_filter(shape, cutoff, order, high_pass=True, squared_butterworth=True):
+    ranges = [
+        np.fft.ifftshift(
+            (np.arange(-(dim - 1) // 2, (dim - 1) // 2 + 1) / (dim * cutoff)) ** 2
+        )
+        for dim in shape
+    ]
+
+    q2 = np.add(*np.meshgrid(*ranges, indexing="ij", sparse=True))
+    q2 = np.power(q2, order)
+
+    filter = 1 / (1 + q2)
+
+    if high_pass:
+        filter *= q2
+
+    if not squared_butterworth:
+        np.sqrt(filter, out=filter)
+
+    return filter
+
+
 def grayscale_convert(image):
     image = 255 * (image / image.max())
     w, h = image.shape
