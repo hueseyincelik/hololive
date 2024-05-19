@@ -8,6 +8,25 @@ The retrieval of the $2\pi$-wrapped phase image works by taking the detector rea
 Distortion-induced phase modulations can optionally be corrected using an empty hologram (i.e. without the specimen in the field of view) as a reference hologram.
 
 Estimation of the fringe contrast in Fourier space is defined as twice the amplitude fraction of the sideband and the centerband (i.e. the autocorrelation).
+
+## Performance
+The performance of the live reconstruction (i.e. the number of frames that can be processed in a given time interval) heavily depends on the specific setup. For most combinations of microscope, detector, and image size, the majority of time is spent acquiring and transferring the hologram from the controller to the PC running `HoloLive`.
+
+Excluding the time taken to acquire and transfer the hologram, a significant portion of the computation is related to various FFT operations. For commonly used image sizes of $2^n$, the different FFT implementations scale as follows (tested on an Apple™ M3 CPU, where $t_{rec}$ is the average value for $100$ consecutive reconstructions):
+
+![HoloLive Performance Benchmark](/docs/performance_benchmark.svg)
+
+For a typical $2048\text{px} \times 2048\text{px}$ image, the average reconstruction time $t_{rec}$ ranges from approximately $45\text{ms}$ to $85\text{ms}$, depending on the specific FFT implementation used. When the image is binned down to $512\text{px} \times 512\text{px}$, this time is reduced to around $6\text{ms}$ to $8\text{ms}$.
+
+Since the data type of the input image is real, one can exploit the symmetry in the FFT by calculating only half of the frequency spectrum and inferring the other half (this is enabled by the `real_FFT` option). For `NumPy`'s FFT implementation, this can significantly speed up the FFT operation. `SciPy`, on the other hand, already takes advantage of this symmetry when detecting an input image of data type real, which can actually lead to a slowdown when using `real_FFT`.
+
+Generally speaking, the performance ranking (from fastest to slowest) is:
+
+```
+scipy.fft.fft2 > scipy.fft.rfft2 > numpy.fft.rfft2 > numpy.fft.fft2
+```
+Therefore, it is recommended to always use the general `SciPy` implementation for 2D FFT.
+
 ## Installation
 Install all required packages with pip using:
 ```
