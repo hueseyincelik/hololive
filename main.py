@@ -1,3 +1,4 @@
 from src import gui
 
-main = gui.GUI("192.168.99.10", 8080)
+if __name__ == "__main__":
+    main = gui.GUI("192.168.99.10", 8080)

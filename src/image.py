@@ -59,10 +59,7 @@ def butterworth_filter(shape, cutoff, order, high_pass=True, squared_butterworth
 
 
 def grayscale_convert(image):
-    image = 255 * (image / image.max())
-    w, h = image.shape
-
-    image_gray = np.empty((w, h, 3), dtype=np.uint8)
-    image_gray[:, :, 2] = image_gray[:, :, 1] = image_gray[:, :, 0] = image
+    image_8bit = 255 * (image - image.min()) / (image.max() - image.min())
+    image_gray = np.stack((image_8bit,) * 3, axis=-1, dtype=np.uint8, casting="unsafe")
 
     return image_gray

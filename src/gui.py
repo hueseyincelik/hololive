@@ -1,8 +1,10 @@
+import contextlib
+import datetime
 import itertools as it
+import multiprocessing
 import os
 import sys
-from datetime import datetime
-from threading import Thread
+import threading
 
 import numpy as np
 import scipy.fft as sfft
@@ -32,6 +34,17 @@ class GUI:
 
         self.microscope = microscope.Microscope(ip, port, remote)
         self.microscope.configure_camera(camera, exposure_time, binning)
+
+        self.img_queue = multiprocessing.Queue(maxsize=10)
+        self.img_CCD = np.ones(
+            (
+                self.microscope.get_cameras()[camera]["height"] // binning,
+                self.microscope.get_cameras()[camera]["width"] // binning,
+            )
+        )
+
+        self.acquire_process = multiprocessing.Process(target=self.acquire)
+        self.acquire_process.start()
 
         self.sideband_position, self.sideband_distance = (0, 0), 0
         self.sideband_area, self.sideband_lock = "upper", False
@@ -63,6 +76,9 @@ class GUI:
         while True:
             for event in pg.event.get():
                 if event.type == pg.QUIT:
+                    self.acquire_process.terminate()
+                    self.acquire_process.join()
+
                     sys.exit()
                 elif event.type == pg.VIDEORESIZE:
                     self.screen = pg.display.set_mode((event.w, event.h), pg.RESIZABLE)
@@ -96,7 +112,7 @@ class GUI:
                         self.sideband_lock = True
 
                     if event.key == pg.K_s:
-                        self.save_screenshot_thread = Thread(
+                        self.save_screenshot_thread = threading.Thread(
                             target=self.save_screenshot
                         )
                         self.save_screenshot_thread.start()
@@ -154,13 +170,19 @@ class GUI:
 
             pg.display.flip()
 
+    def acquire(self):
+        while True:
+            with contextlib.suppress(BaseException):
+                self.img_queue.put_nowait(self.microscope.acquire())
+
     def reconstruct(self):
-        img_CCD = self.microscope.acquire()
+        with contextlib.suppress(BaseException):
+            self.img_CCD = self.img_queue.get_nowait()
 
         img_fft = (
-            image.rfft2_to_fft2(img_CCD.shape, sfft.rfft2(img_CCD))
+            image.rfft2_to_fft2(self.img_CCD.shape, sfft.rfft2(self.img_CCD))
             if self.real_FFT
-            else sfft.fft2(img_CCD)
+            else sfft.fft2(self.img_CCD)
         )
         img_fft_shifted = sfft.fftshift(img_fft)
 
@@ -207,7 +229,7 @@ class GUI:
             constant_values=0,
         )
 
-        self.object_image_wave = sfft.ifft2(img_cutout_padded)
+        self.object_image_wave = sfft.ifft2(sfft.ifftshift(img_cutout_padded))
         reconstructed_image_wave = (
             self.object_image_wave / self.reference_image_wave
             if self.reference_image_wave is not None
@@ -220,8 +242,8 @@ class GUI:
             else np.angle(reconstructed_image_wave)
         )
 
-    def save_screenshot(self, format="png"):
+    def save_screenshot(self, extension="png"):
         pg.image.save(
             self.screen,
-            f"HoloLive_{'PH' if not self.reconstruct_amplitude else 'AMP'}_{format(datetime.now(), '%Y-%m-%d_%H-%M-%S')}.{format}",
+            f"HoloLive_{'PH' if not self.reconstruct_amplitude else 'AMP'}_{format(datetime.datetime.now(), '%Y-%m-%d_%H-%M-%S')}.{extension}",
         )
