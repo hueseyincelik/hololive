@@ -5,7 +5,7 @@ Live phase and amplitude reconstruction for off-axis electron holography with FE
 
 The retrieval of the $2\pi$-wrapped phase image works by taking the detector readout, Fourier transforming it such that the autocorrelation lies in the center, automatically finding the sideband in the specified image area, centering a cut-out around the sideband with a width of $1/3$ of the distance between the autocorrelation and the sideband through zero padding in Fourier space and calculating the angle of the complex argument of the inverse Fourier transform. The reconstructed amplitude in turn is defined as the the absolute value of the inverse Fourier transform.
 
-Distortion-induced phase modulations can optionally be corrected using an empty hologram (i.e. without the specimen in the field of view) as a reference hologram.
+Distortion-induced phase modulations can optionally be corrected using an empty hologram (i.e. without the specimen in the field of view) as a reference hologram. Furthermore, a continuous phase image can be retrieved by applying a phase unwrapping algorithm that attempts to remove any $2\pi$-jumps present in the reconstruction.
 
 Estimation of the fringe contrast in Fourier space is defined as twice the amplitude fraction of the sideband and the centerband (i.e. the autocorrelation).
 
@@ -26,6 +26,8 @@ Generally speaking, the performance ranking (from fastest to slowest) is:
 scipy.fft.fft2 > scipy.fft.rfft2 > numpy.fft.rfft2 > numpy.fft.fft2
 ```
 Therefore, it is recommended to always use the general `SciPy` implementation for 2D FFT.
+
+Furthermore, applying `scikit-image`'s phase unwrapping algorithm to the reconstructed phase can result in a significant performance penalty (around $50\text{ms}$ in the above tested setup).
 
 ## Installation
 Install all required packages with pip using:
@@ -48,6 +50,7 @@ Various keyboard shortcuts can be used to adjust some of the parameters used for
 - `A` can be used to cycle between the values $1,2,3,4$ as an amplification factor for the reconstructed phase
 - `F` can be used to apply a $14^{\text{th}}$-order Butterworth filter to the sideband cut-out before zero padding
 - `+/-` can be used to increase the cutoff frequency of the Butterworth filter in steps $1$% of the sampling frequency
+- `U` can be used to apply a phase unwrapping algorithm to the reconstructed phase to (attempt to) remove any $2\pi$-jumps
 - `R` can be used to utilize the current acquisition as a reference hologram during the reconstruction process (note that this also locks the sideband position)
 - `S` can be used to save a screenshot of the currently reconstructed phase/amplitude (including on-screen information) as a timestamped PNG image
 - `P` can be used to pause the acquisition of new phase/amplitude images

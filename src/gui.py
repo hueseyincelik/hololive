@@ -8,7 +8,7 @@ import threading
 
 import numpy as np
 import scipy.fft as sfft
-from skimage import draw
+from skimage import draw, restoration
 
 os.environ["PYGAME_HIDE_SUPPORT_PROMPT"] = "hide"
 
@@ -60,6 +60,8 @@ class GUI:
         self.fringe_contrast = 0
 
         self.reconstruct_amplitude = False
+        self.unwrap_phase = False
+
         self.pause = False
 
         pg.init()
@@ -99,6 +101,8 @@ class GUI:
 
                     if event.key == pg.K_TAB:
                         self.reconstruct_amplitude = not self.reconstruct_amplitude
+                        self.unwrap_phase = False
+
                         self.amplifications, self.phase_amplification = (
                             it.islice(it.cycle([1, 2, 3, 4]), 1, None),
                             1,
@@ -106,6 +110,9 @@ class GUI:
 
                     if event.key == pg.K_a and not self.reconstruct_amplitude:
                         self.phase_amplification = next(self.amplifications)
+
+                    if event.key == pg.K_u and not self.reconstruct_amplitude:
+                        self.unwrap_phase = not self.unwrap_phase
 
                     if event.key == pg.K_r:
                         self.reference_image_wave = self.object_image_wave.copy()
@@ -138,6 +145,11 @@ class GUI:
                         )
                     )
 
+                if self.unwrap_phase and not self.reconstruct_amplitude:
+                    self.current_reconstruction = restoration.unwrap_phase(
+                        self.current_reconstruction
+                    )
+
                 self.current_reconstruction_grayscale = image.grayscale_convert(
                     self.current_reconstruction
                 )
@@ -156,17 +168,33 @@ class GUI:
                     4,
                 )
 
-            for coordinate, message in zip(
-                [(5, 5), (5, 25), (5, 45), (5, 85), (5, 105)],
-                [
-                    f"Filter: {self.butterworth_filter} ({np.round(self.butterworth_cutoff, 2)})",
-                    f"Amplification: {self.phase_amplification}",
-                    f"Mask: {self.centerband_mask}%",
-                    f"Sideband: {self.sideband_area}{' (L)' if self.sideband_lock else ''}",
-                    f"Contrast: {np.round(100 * self.fringe_contrast, 2)}%",
-                ],
-            ):
-                self.font.render_to(self.screen, coordinate, message, pg.Color("RED"))
+            self.font.render_to(
+                self.screen,
+                (5, 5),
+                f"Filter: {self.butterworth_filter} ({np.round(self.butterworth_cutoff, 2)})",
+                pg.Color("RED"),
+            )
+            self.font.render_to(
+                self.screen,
+                (5, 25),
+                f"Phase: {self.phase_amplification}x{' (U)' if self.unwrap_phase else ''}",
+                pg.Color("RED"),
+            )
+            self.font.render_to(
+                self.screen, (5, 45), f"Mask: {self.centerband_mask}%", pg.Color("RED")
+            )
+            self.font.render_to(
+                self.screen,
+                (5, 85),
+                f"Sideband: {self.sideband_area}{' (L)' if self.sideband_lock else ''}",
+                pg.Color("RED"),
+            )
+            self.font.render_to(
+                self.screen,
+                (5, 105),
+                f"Contrast: {np.round(100 * self.fringe_contrast, 2)}%",
+                pg.Color("RED"),
+            )
 
             pg.display.flip()
 
