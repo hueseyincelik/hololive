@@ -22,8 +22,7 @@ class GUI:
 		self.microscope.configure_camera(camera, exposure_time, binning)
 
 		self.img_queue = multiprocessing.Queue(maxsize=10)
-		self.img_CCD = np.ones((self.microscope.get_cameras()[camera]['height'] // binning,
-														self.microscope.get_cameras()[camera]['width'] // binning))
+		self.img_CCD = np.ones(self.microscope.get_image_size())
 
 		self.acquire_process = multiprocessing.Process(target=self.acquire)
 		self.acquire_process.start()
