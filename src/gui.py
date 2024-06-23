@@ -36,12 +36,7 @@ class GUI:
         self.microscope.configure_camera(camera, exposure_time, binning)
 
         self.img_queue = multiprocessing.Queue(maxsize=10)
-        self.img_CCD = np.ones(
-            (
-                self.microscope.get_cameras()[camera]["height"] // binning,
-                self.microscope.get_cameras()[camera]["width"] // binning,
-            )
-        )
+        self.img_CCD = np.ones(self.microscope.get_image_size())
 
         self.acquire_process = multiprocessing.Process(target=self.acquire)
         self.acquire_process.start()
@@ -49,10 +44,9 @@ class GUI:
         self.sideband_position, self.sideband_distance = (0, 0), 0
         self.sideband_area, self.sideband_lock = "upper", False
 
-        self.amplifications, self.phase_amplification = (
-            it.islice(it.cycle([1, 2, 3, 4]), 1, None),
-            1,
-        )
+        self.amplifications = it.islice(it.cycle([1, 2, 3, 4]), 1, None)
+        self.phase_amplification = 1
+
         self.butterworth_filter, self.butterworth_cutoff = True, 0.05
         self.centerband_mask = 5
 
@@ -66,10 +60,11 @@ class GUI:
 
         pg.init()
 
-        self.screen, self.font = (
-            pg.display.set_mode((self.dimension, self.dimension), pg.RESIZABLE),
-            pg.freetype.SysFont(None, 18),
+        self.font = pg.freetype.SysFont(None, 18)
+        self.screen = pg.display.set_mode(
+            (self.dimension, self.dimension), pg.RESIZABLE
         )
+
         pg.display.set_caption("HoloLive")
 
         self.run()
@@ -103,10 +98,8 @@ class GUI:
                         self.reconstruct_amplitude = not self.reconstruct_amplitude
                         self.unwrap_phase = False
 
-                        self.amplifications, self.phase_amplification = (
-                            it.islice(it.cycle([1, 2, 3, 4]), 1, None),
-                            1,
-                        )
+                        self.amplifications = it.islice(it.cycle([1, 2, 3, 4]), 1, None)
+                        self.phase_amplification = 1
 
                     if event.key == pg.K_a and not self.reconstruct_amplitude:
                         self.phase_amplification = next(self.amplifications)
@@ -271,7 +264,7 @@ class GUI:
         )
 
     def save_screenshot(self, extension="png"):
-        pg.image.save(
-            self.screen,
-            f"HoloLive_{'PH' if not self.reconstruct_amplitude else 'AMP'}_{format(datetime.datetime.now(), '%Y-%m-%d_%H-%M-%S')}.{extension}",
-        )
+        type = "PH" if not self.reconstruct_amplitude else "AMP"
+        timestamp = format(datetime.datetime.now(), "%Y-%m-%d_%H-%M-%S")
+
+        pg.image.save(self.screen, f"HoloLive_{type}_{timestamp}.{extension}")
