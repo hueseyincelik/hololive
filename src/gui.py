@@ -47,7 +47,7 @@ class GUI:
         self.amplifications = it.islice(it.cycle([1, 2, 3, 4]), 1, None)
         self.phase_amplification = 1
 
-        self.butterworth_filter, self.butterworth_cutoff = True, 0.05
+        self.cutout_filter, self.filter_cutoff = True, 0.2
         self.centerband_mask = 5
 
         self.object_image_wave, self.reference_image_wave = None, None
@@ -119,12 +119,12 @@ class GUI:
                         self.pause = not self.pause
 
                     if event.key == pg.K_f:
-                        self.butterworth_filter = not self.butterworth_filter
+                        self.cutout_filter = not self.cutout_filter
 
-                    if event.key == pg.K_PLUS and self.butterworth_cutoff <= 0.49:
-                        self.butterworth_cutoff += 0.01
-                    if event.key == pg.K_MINUS and self.butterworth_cutoff > 0.01:
-                        self.butterworth_cutoff -= 0.01
+                    if event.key == pg.K_PLUS and self.filter_cutoff <= 0.99:
+                        self.filter_cutoff += 0.01
+                    if event.key == pg.K_MINUS and self.filter_cutoff >= 0.01:
+                        self.filter_cutoff -= 0.01
 
             if not self.pause:
                 self.current_reconstruction = self.reconstruct()
@@ -153,7 +153,7 @@ class GUI:
 
             # fmt: off
             annotations = [
-                ((5, 5), f"Filter: {self.butterworth_filter} ({np.round(self.butterworth_cutoff, 2)})"),
+                ((5, 5), f"Filter: {self.cutout_filter} ({np.round(self.filter_cutoff, 2)})"),
                 ((5, 25), f"Phase: {self.phase_amplification}x{' (U)' if self.unwrap_phase else ''}"),
                 ((4, 45), f"Mask: {self.centerband_mask}%", pg.Color("RED")),
                 ((5, 85), f"Sideband: {self.sideband_area}{' (L)' if self.sideband_lock else ''}"),
@@ -209,10 +209,8 @@ class GUI:
 
         img_cutout = img_fft_shifted[sb_rr, sb_cc]
 
-        if self.butterworth_filter:
-            img_cutout *= image.butterworth_filter(
-                img_cutout.shape, self.butterworth_cutoff, order=14
-            )
+        if self.cutout_filter:
+            img_cutout *= image.tukey_filter(img_cutout.shape, self.filter_cutoff)
 
         img_cutout_padded = image.pad_image(
             img_cutout, self.dimension, mode="constant", constant_values=0

@@ -48,8 +48,8 @@ Various keyboard shortcuts can be used to adjust some of the parameters used for
 - `LEFT/RIGHT` can be used to adjust the radius of the circle used to mask the centerband, which is zeroed in order to avoid the influence of the autocorrelation during the automatic sideband detection, in steps of $1$% of the (minimum) image dimension
 - `TAB` can be used to switch between the reconstructed phase and amplitude
 - `A` can be used to cycle between the values $1,2,3,4$ as an amplification factor for the reconstructed phase
-- `F` can be used to apply a $14^{\text{th}}$-order Butterworth filter to the sideband cut-out before zero padding
-- `+/-` can be used to increase the cutoff frequency of the Butterworth filter in steps $1$% of the sampling frequency
+- `F` can be used to apply a Tukey filter to the sideband cut-out before zero padding (alternatively, a Butterworth filter is available in [`image.py`](src/image.py))
+- `+/-` can be used to adjust the shape parameter $\alpha$ of the Tukey filter, representing the fraction of the window inside the cosine tapered region, in steps of $0.01$
 - `U` can be used to apply a phase unwrapping algorithm to the reconstructed phase to (attempt to) remove any $2\pi$-jumps
 - `R` can be used to utilize the current acquisition as a reference hologram during the reconstruction process (note that this also locks the sideband position)
 - `S` can be used to save a screenshot of the currently reconstructed phase/amplitude (including on-screen information) as a timestamped PNG image

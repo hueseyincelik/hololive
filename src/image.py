@@ -1,4 +1,5 @@
 import numpy as np
+from skimage import filters
 
 
 def rfft2_to_fft2(img_shape, img_rFFT):
@@ -56,6 +57,10 @@ def butterworth_filter(shape, cutoff, order, high_pass=True, squared_butterworth
         np.sqrt(filter, out=filter)
 
     return filter
+
+
+def tukey_filter(shape, cutoff):
+    return filters.window(("tukey", cutoff), shape)
 
 
 def convert_gray(image):
