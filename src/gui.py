@@ -14,7 +14,7 @@ os.environ["PYGAME_HIDE_SUPPORT_PROMPT"] = "hide"
 
 import pygame as pg
 
-from . import image, microscope
+from . import filter, image, microscope
 
 
 class GUI:
@@ -210,7 +210,7 @@ class GUI:
         img_cutout = img_fft_shifted[sb_rr, sb_cc]
 
         if self.cutout_filter:
-            img_cutout *= image.tukey_filter(img_cutout.shape, self.filter_cutoff)
+            img_cutout *= filter.window(("tukey", self.filter_cutoff), img_cutout.shape)
 
         img_cutout_padded = image.pad_image(
             img_cutout, self.dimension, mode="constant", constant_values=0

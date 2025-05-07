@@ -3,3 +3,4 @@ numpy
 pygame
 temscript
 scikit-image
+opencv-python
