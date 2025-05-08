@@ -27,10 +27,8 @@ class GUI:
         exposure_time=0.2,
         binning=4,
         dimension=512,
-        real_FFT=False,
     ):
         self.dimension = (dimension, dimension)
-        self.real_FFT = real_FFT
 
         self.microscope = microscope.Microscope(ip, port, remote)
         self.microscope.configure_camera(camera, exposure_time, binning)
@@ -48,7 +46,7 @@ class GUI:
         self.phase_amplification = 1
 
         self.cutout_filter, self.filter_cutoff = True, 0.2
-        self.centerband_mask = 5
+        self.centerband_mask = 2
 
         self.object_image_wave, self.reference_image_wave = None, None
         self.fringe_contrast = 0
@@ -86,10 +84,14 @@ class GUI:
                         self.sideband_area = "upper"
                     if event.key == pg.K_DOWN:
                         self.sideband_area = "lower"
-
+                    if event.key == pg.K_LEFT:
+                        self.sideband_area = "left"
                     if event.key == pg.K_RIGHT:
+                        self.sideband_area = "right"
+
+                    if event.key == pg.K_GREATER:
                         self.centerband_mask += 1
-                    if event.key == pg.K_LEFT and self.centerband_mask > 1:
+                    if event.key == pg.K_LESS and self.centerband_mask > 1:
                         self.centerband_mask -= 1
 
                     if event.key == pg.K_TAB:
@@ -175,17 +177,20 @@ class GUI:
         with contextlib.suppress(BaseException):
             self.img_CCD = self.img_queue.get_nowait()
 
-        if self.real_FFT:
-            img_fft = image.rfft2_to_fft2(self.img_CCD.shape, sfft.rfft2(self.img_CCD))
-        else:
-            img_fft = sfft.fft2(self.img_CCD)
-
+        img_fft = sfft.fft2(self.img_CCD)
         img_fft_shifted = sfft.fftshift(img_fft)
 
-        if self.sideband_area == "upper":
-            img_fft_shifted[img_fft_shifted.shape[0] // 2 :, :] = 0
-        elif self.sideband_area == "lower":
-            img_fft_shifted[: img_fft_shifted.shape[0] // 2, :] = 0
+        match self.sideband_area:
+            case "upper":
+                img_fft_shifted[img_fft_shifted.shape[0] // 2 :, :] = 0
+            case "lower":
+                img_fft_shifted[: img_fft_shifted.shape[0] // 2, :] = 0
+            case "left":
+                img_fft_shifted[:, img_fft_shifted.shape[1] // 2 :] = 0
+            case "right":
+                img_fft_shifted[:, : img_fft_shifted.shape[1] // 2] = 0
+            case other:
+                raise ValueError(f"Error! Unsupported Sideband Area: {other}!")
 
         cb_center = np.asarray(img_fft_shifted.shape) / 2
         cb_radius = min(img_fft_shifted.shape) * (self.centerband_mask / 100)

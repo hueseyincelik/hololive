@@ -20,7 +20,7 @@ Excluding the time taken to acquire and transfer the hologram, a significant por
 
 For a typical $2048\text{px} \times 2048\text{px}$ image, the average reconstruction time $t_{rec}$ ranges from approximately $45\text{ms}$ to $85\text{ms}$, depending on the specific FFT implementation used. When the image is binned down to $512\text{px} \times 512\text{px}$, this time is reduced to around $6\text{ms}$ to $8\text{ms}$.
 
-Since the data type of the input image is real, one can exploit the symmetry in the FFT by calculating only half of the frequency spectrum and inferring the other half (this is enabled by the `real_FFT` option). For `NumPy`'s FFT implementation, this can significantly speed up the FFT operation. `SciPy`, on the other hand, already takes advantage of this symmetry when detecting an input image of data type real, which can actually lead to a slowdown when using `real_FFT`.
+Since the data type of the input image is real, one can exploit the symmetry in the FFT by calculating only half of the frequency spectrum and inferring the other half (see `rfft2_to_fft2` in [`image.py`](src/image.py)). For `NumPy`'s FFT implementation, this can significantly speed up the FFT operation. `SciPy`, on the other hand, already takes advantage of this symmetry when detecting an input image of data type real, which can actually lead to a slowdown when using `rfft2_to_fft2`.
 
 Generally speaking, the performance ranking (from fastest to slowest) is:
 
@@ -46,8 +46,8 @@ In order to remotely connect to the microscope, `temscript` has to be running on
 
 Various keyboard shortcuts can be used to adjust some of the parameters used for the live reconstruction:
 - `L` can be used to lock the sideband position, preventing it from being automatically recalculated until the lock is released again (note that disabling the sideband lock also resets/disables the reference hologram utilized during the reconstruction process)
-- `UP,DOWN` can be used to change the image area in which the sideband is automatically detected
-- `LEFT/RIGHT` can be used to adjust the radius of the circle used to mask the centerband, which is zeroed in order to avoid the influence of the autocorrelation during the automatic sideband detection, in steps of $1$% of the (minimum) image dimension
+- `UP/DOWN/LEFT/RIGHT` can be used to change the image area in which the sideband is automatically detected
+- `GREATER/LESS` can be used to adjust the radius of the circle used to mask the centerband, which is zeroed in order to avoid the influence of the autocorrelation during the automatic sideband detection, in steps of $1$% of the (minimum) image dimension
 - `TAB` can be used to switch between the reconstructed phase and amplitude
 - `A` can be used to cycle between the values $1,2,3,4$ as an amplification factor for the reconstructed phase
 - `F` can be used to apply a Tukey filter to the sideband cut-out before zero padding
