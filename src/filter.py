@@ -42,7 +42,7 @@ def fresnel(
     for position in [first_filter, second_filter]:
         cv.line(
             img=mask,
-            pt1=tuple(centerband[::-1]),
+            pt1=tuple(centerband.astype(int)[::-1]),
             pt2=tuple(position[::-1]),
             color=0,
             thickness=thickness,
