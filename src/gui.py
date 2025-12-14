@@ -25,13 +25,14 @@ class GUI:
         remote=True,
         camera="CCD",
         exposure_time=0.2,
-        binning=4,
+        binning=(4, "sum"),
         dimension=512,
     ):
         self.dimension = (dimension, dimension)
+        self.binning = binning
 
         self.microscope = microscope.Microscope(ip, port, remote)
-        self.microscope.configure_camera(camera, exposure_time, binning)
+        self.microscope.configure_camera(camera, exposure_time, self.binning[0])
 
         self.img_queue = multiprocessing.Queue(maxsize=10)
         self.img_CCD = np.ones(self.microscope.get_image_size())
@@ -49,10 +50,11 @@ class GUI:
         self.centerband_mask = 2
 
         self.object_image_wave, self.reference_image_wave = None, None
-        self.fringe_contrast = 0
-
         self.reconstruct_amplitude = False
         self.unwrap_phase = False
+
+        self.fringe_contrast, self.fringe_spacing = 0, 0
+        self.fringe_mean, self.fringe_std = 0, 0
 
         self.pause = False
 
@@ -155,16 +157,27 @@ class GUI:
 
             # fmt: off
             annotations = [
-                ((5, 5), f"Filter: {self.cutout_filter} ({np.round(self.filter_cutoff, 2)})"),
+                ((5, 5), f"Filter: {self.cutout_filter} ({self.filter_cutoff:.2f})"),
                 ((5, 25), f"Phase: {self.phase_amplification}x{' (U)' if self.unwrap_phase else ''}"),
-                ((4, 45), f"Mask: {self.centerband_mask}%", pg.Color("RED")),
+                ((5, 45), f"Mask: {self.centerband_mask}%"),
                 ((5, 85), f"Sideband: {self.sideband_area}{' (L)' if self.sideband_lock else ''}"),
-                ((5, 105), f"Contrast: {np.round(100 * self.fringe_contrast, 2)}%")
+            ]
+
+            fringe_annotations = [
+                (5, f"Contrast: {100 * self.fringe_contrast:.2f}%"),
+                (25, f"Spacing: {self.fringe_spacing:.2f} px"),
+                (45, f"Mean: {self.fringe_mean:.2f}"),
+                (65, f"Std: {self.fringe_std:.2f}"),
             ]
             # fmt: on
 
             for annotation in annotations:
                 self.font.render_to(self.screen, *annotation, pg.Color("RED"))
+
+            for y, text in fringe_annotations:
+                text_rect = self.font.get_rect(text)
+                x = pg_display_size[0] - text_rect.width - 5
+                self.font.render_to(self.screen, (x, y), text, pg.Color("RED"))
 
             pg.display.flip()
 
@@ -199,7 +212,7 @@ class GUI:
         img_fft_shifted[cb_rr, cb_cc] = 0
 
         if not self.sideband_lock:
-            sb_index = img_fft_shifted.argmax()
+            sb_index = np.abs(img_fft_shifted).argmax()
 
             self.sideband_position = np.unravel_index(sb_index, img_fft_shifted.shape)
             self.sideband_distance = np.linalg.norm(cb_center - self.sideband_position)
@@ -208,6 +221,16 @@ class GUI:
         cb_intensity = np.abs(img_fft[0, 0])
 
         self.fringe_contrast = 2 * sb_intensity / cb_intensity
+
+        dy, dx = np.asarray(self.sideband_position) - cb_center
+        q = np.hypot(dx / img_fft_shifted.shape[1], dy / img_fft_shifted.shape[0])
+
+        self.fringe_spacing = self.binning[0] / q if q != 0 else 0
+        self.fringe_mean, self.fringe_std = np.mean(self.img_CCD), np.std(self.img_CCD)
+
+        if self.binning[1] == "sum":
+            self.fringe_mean /= self.binning[0] ** 2
+            self.fringe_std /= self.binning[0] ** 2
 
         sb_boundary = np.asarray(self.sideband_position) - self.sideband_distance / 6
         sb_rr, sb_cc = draw.rectangle(sb_boundary, extent=self.sideband_distance / 3)

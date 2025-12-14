@@ -9,11 +9,13 @@ Masking of the sideband in Fourier space is performed using a Tukey filter with 
 
 Distortion-induced phase modulations can optionally be corrected using an empty hologram (i.e. without the specimen in the field of view) as a reference hologram. Furthermore, a continuous phase image can be retrieved by applying a phase unwrapping algorithm that attempts to remove any $2\pi$-jumps present in the reconstruction.
 
-Estimation of the fringe contrast in Fourier space is defined as twice the amplitude fraction of the sideband and the centerband (i.e. the autocorrelation).[^2]
+Estimation of the fringe contrast in Fourier space is defined as twice the amplitude fraction of the sideband and the centerband (i.e. the autocorrelation).[^2] The fringe spacing is defined as the real-space period of the interference fringes, determined by the spatial frequency separation between the sideband and the centerband (i.e. the Euclidean norm of their separation in Fourier space), assuming that the Nyquist criterion is not violated[^3].
 
 [^1]: This could, in theory, also be achieved by applying Hann smoothing to the hologram prior to Fourier transformation; however, this would introduce other artifacts in the sideband region.
 
 [^2]: Due to spectral leakage of both the sideband and centerband into neighbouring pixels, one would, in practice, integrate both over a small circular mask. For performance reasons, this step is omitted here.
+
+[^3]: This assumption is often violated when detector binning is used, since the reduced sampling can result in values >0.5 cycles/px and therefore aliasing, meaning the extracted fringe spacing is often not reliable and should be taken with a grain of salt.
 
 ## Performance
 The performance of the live reconstruction (i.e. the number of frames that can be processed in a given time interval) heavily depends on the specific setup. For most combinations of microscope, detector, and image size, the majority of time is spent acquiring and transferring the hologram from the controller to the PC running `HoloLive`.
