@@ -31,7 +31,7 @@ def butterworth(shape, cutoff, order, high_pass=True, squared_butterworth=True):
 
 
 def fresnel(
-    shape, centerband, sideband, thickness=10, smoothness=1, distance=85, threshold=None
+    shape, centerband, sideband, thickness=5, smoothness=1, distance=85, threshold=None
 ):
     mask = np.ones(shape, dtype=float)
     offset = (distance / 100) * (sideband - centerband)
@@ -50,7 +50,49 @@ def fresnel(
 
     filter = ndimage.gaussian_filter(mask, sigma=smoothness)
 
-    if threshold is not None:
+    if threshold is not None and threshold > 0:
+        filter[filter < threshold] = 0
+
+    return filter
+
+    # img_fft_filtered = img_fft_shifted * filter
+    # return fft.ifft2(fft.ifftshift(img_fft_filtered)).real
+
+
+def gibbs(
+    shape,
+    centerband,
+    thickness=5,
+    smoothness=1,
+    distance=100,
+    threshold=None,
+):
+    mask = np.ones(shape, dtype=float)
+    center = np.asarray(centerband, dtype=float)
+
+    limits = {
+        (1, 0): (shape[0] - 1 - center[0], center[0]),
+        (0, 1): (shape[1] - 1 - center[1], center[1]),
+    }
+
+    for direction in [(1, 0), (0, 1)]:
+        pos_limit, neg_limit = limits[direction]
+
+        for sign, max_dist in zip([1, -1], [pos_limit, neg_limit]):
+            offset = sign * (distance / 100) * max_dist * np.asarray(direction)
+            position = center + offset
+
+            cv.line(
+                img=mask,
+                pt1=tuple(center.astype(int)[::-1]),
+                pt2=tuple(position.astype(int)[::-1]),
+                color=0,
+                thickness=thickness,
+            )
+
+    filter = ndimage.gaussian_filter(mask, sigma=smoothness)
+
+    if threshold is not None and threshold > 0:
         filter[filter < threshold] = 0
 
     return filter

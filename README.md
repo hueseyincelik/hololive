@@ -5,11 +5,15 @@ Live phase and amplitude reconstruction for off-axis electron holography with FE
 
 The retrieval of the $2\pi$-wrapped phase image works by taking the detector readout, Fourier transforming it such that the autocorrelation lies in the center, automatically finding the sideband in the specified image area, centering a cut-out around the sideband with a width of $1/3$ of the distance between the autocorrelation and the sideband through zero padding in Fourier space and calculating the angle of the complex argument of the inverse Fourier transform. The reconstructed amplitude in turn is defined as the the absolute value of the inverse Fourier transform.
 
-Masking of the sideband in Fourier space is performed using a Tukey filter with an adjustable shape/cutoff to suppress Fourier artifacts. Additional filters (such as a Butterworth filter for smoothing or a Gaussian line filter for suppressing Fresnel diffraction at the biprism filament) are available in [`filter.py`](src/filter.py).
+Masking of the sideband in Fourier space is performed using a Tukey filter with an adjustable shape/cutoff to suppress Fourier artifacts. Additional filters (such as a Butterworth filter for smoothing, a Gaussian line filter for suppressing Fresnel diffraction at the biprism filament or a center-cross filter for dealing with Gibbs-Wilbraham artifacts[^1]) are available in [`filter.py`](src/filter.py).
 
 Distortion-induced phase modulations can optionally be corrected using an empty hologram (i.e. without the specimen in the field of view) as a reference hologram. Furthermore, a continuous phase image can be retrieved by applying a phase unwrapping algorithm that attempts to remove any $2\pi$-jumps present in the reconstruction.
 
-Estimation of the fringe contrast in Fourier space is defined as twice the amplitude fraction of the sideband and the centerband (i.e. the autocorrelation).
+Estimation of the fringe contrast in Fourier space is defined as twice the amplitude fraction of the sideband and the centerband (i.e. the autocorrelation).[^2]
+
+[^1]: This could, in theory, also be achieved by applying Hann smoothing to the hologram prior to Fourier transformation; however, this would introduce other artifacts in the sideband region.
+
+[^2]: Due to spectral leakage of both the sideband and centerband into neighbouring pixels, one would, in practice, integrate both over a small circular mask. For performance reasons, this step is omitted here.
 
 ## Performance
 The performance of the live reconstruction (i.e. the number of frames that can be processed in a given time interval) heavily depends on the specific setup. For most combinations of microscope, detector, and image size, the majority of time is spent acquiring and transferring the hologram from the controller to the PC running `HoloLive`.
@@ -29,7 +33,7 @@ scipy.fft.fft2 > scipy.fft.rfft2 > numpy.fft.rfft2 > numpy.fft.fft2
 ```
 Therefore, it is recommended to always use the general `SciPy` implementation for 2D FFT.
 
-Furthermore, applying `scikit-image`'s phase unwrapping algorithm to the reconstructed phase can result in a significant performance penalty (around $50\text{ms}$ in the above tested setup). Moreover, each additional filter operation incurs a performance penalty (especially the Gaussian line filter).
+Furthermore, applying `scikit-image`'s phase unwrapping algorithm to the reconstructed phase can result in a significant performance penalty (around $50\text{ms}$ in the above tested setup). Moreover, each additional filter operation incurs a performance penalty (especially the various line filters).
 
 ## Installation
 Install all required packages with pip using:
